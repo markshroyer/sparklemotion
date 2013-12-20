@@ -18,6 +18,14 @@
     CLR     r30.t14
 .endm
 
+.macro DELAY
+.mparam ns, label, del
+    MOV     r2, ns/10 - del/2 - 1
+label:  
+    SUB     r2, r2, 1
+    QBNE    label, r2, 0
+.endm
+
 START:
 
     MOV     r1, 1000
@@ -25,19 +33,9 @@ START:
 MAINLOOP:
 
     SIGHIGH
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    DELAY   40, sleep_high, 1
     SIGLOW
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    DELAY   40, sleep_low, 3
 
     SUB     r1, r1, 1
     QBNE    MAINLOOP, r1, 0
