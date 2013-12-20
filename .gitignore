@@ -1,0 +1,4 @@
+pru
+*.o
+*.bin
+*.dtbo
