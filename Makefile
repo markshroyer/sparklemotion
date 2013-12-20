@@ -9,8 +9,11 @@ all: xmastree.dtbo prucode.bin pru
 %.dtbo: %.dts
 	$(DTC) -I dts -O dtb -o $@ -@ $<
 
-prucode.bin: prucode.hp prucode.p
+prucode.bin: prucode.p
 	$(PASM) -b prucode.p
+
+prucode.p: prucode.pp
+	gcc -E -x c prucode.pp | grep -v '^# ' > prucode.p
 
 pru: pru.o
 	cc $(CFLAGS) -o $@ $< $(LDFLAGS)

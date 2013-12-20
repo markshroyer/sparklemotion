@@ -1,4 +1,5 @@
 pru
 *.o
 *.bin
+prucode.p
 *.dtbo
