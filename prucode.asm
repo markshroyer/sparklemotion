@@ -3,6 +3,14 @@
 
 
 ;; 
+;; M4 macros
+;;
+
+define(`concat', $1$2)dnl
+define(`ndelay', `_NDELAY $1, $2, concat(_ndelay_, __line__)')dnl
+
+
+;; 
 ;; PASM defines
 ;;
 
@@ -10,14 +18,6 @@
 #define GPIO1 0x4804c000
 #define GPIO1_CLEARDATAOUT 0x190
 #define GPIO1_SETDATAOUT 0x194
-
-
-;; 
-;; M4 macros
-;;
-
-define(`concat', $1$2)
-define(`ndelay', `_NDELAY $1, $2, concat(_ndelay_, __line__)')dnl
 
 
 ;; 
@@ -64,6 +64,6 @@ MAINLOOP:
     SUB     r1, r1, 1
     QBNE    MAINLOOP, r1, 0
 
-    // Signal program completion
+    ;; Signal program completion
     MOV     r31.b0, PRU0_ARM_INTERRUPT+16
     HALT
