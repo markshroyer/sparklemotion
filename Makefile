@@ -12,8 +12,8 @@ all: xmastree.dtbo prucode.bin pru
 prucode.bin: prucode.p
 	$(PASM) -b prucode.p
 
-prucode.p: prucode.pp
-	gcc -E -x c prucode.pp | grep -v '^# ' > prucode.p
+%.p: %.asm
+	gcc -E -x c $< | grep -v '^# ' > $@
 
 pru: pru.o
 	cc $(CFLAGS) -o $@ $< $(LDFLAGS)
@@ -22,6 +22,6 @@ pru.o: pru.c
 	cc $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f pru pru.o prucode.bin xmastree.dtbo
+	rm -f pru *.o prucode.p *.bin *.dtbo
 
 .PHONY: clean
