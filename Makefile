@@ -16,10 +16,10 @@ prucode.bin: prucode.p
 	gcc -E -x c $< | grep -v '^# ' > $@
 
 pru: pru.o
-	cc $(CFLAGS) -o $@ $< $(LDFLAGS)
+	gcc $(CFLAGS) -o $@ $< $(LDFLAGS)
 
-pru.o: pru.c
-	cc $(CFLAGS) -c -o $@ $<
+%.o: %.c
+	gcc $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f pru *.o prucode.p *.bin *.dtbo
