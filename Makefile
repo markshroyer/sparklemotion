@@ -9,17 +9,17 @@ all: xmastree.dtbo prucode.bin pru
 %.dtbo: %.dts
 	$(DTC) -I dts -O dtb -o $@ -@ $<
 
-prucode.bin: prucode.p
-	$(PASM) -b prucode.p
-
 %.p: %.asm
-	gcc -E -x c $< | grep -v '^# ' > $@
+	m4 $< > $@
 
-pru: pru.o
-	gcc $(CFLAGS) -o $@ $< $(LDFLAGS)
+%.bin: %.p
+	$(PASM) -b $<
 
 %.o: %.c
-	gcc $(CFLAGS) -c -o $@ $<
+	cc $(CFLAGS) -c -o $@ $<
+
+pru: pru.o
+	cc $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
 	rm -f pru *.o prucode.p *.bin *.dtbo

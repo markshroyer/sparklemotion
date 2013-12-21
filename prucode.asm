@@ -1,16 +1,28 @@
-// -*- mode: asm; -*-
-
 .origin 0
 .entrypoint START
+
+
+;; 
+;; PASM defines
+;;
 
 #define PRU0_ARM_INTERRUPT 19
 #define GPIO1 0x4804c000
 #define GPIO1_CLEARDATAOUT 0x190
 #define GPIO1_SETDATAOUT 0x194
 
-#define _NDELAY_LABEL(prefix, num) prefix##num
-#define _NDELAY(ns, del, num) _NDELAY_CODE ns, del, _NDELAY_LABEL(delay_label_, num)
-#define NDELAY(ns, del) _NDELAY(ns, del, __COUNTER__)
+
+;; 
+;; M4 macros
+;;
+
+define(`concat', $1$2)
+define(`ndelay', `_NDELAY $1, $2, concat(_ndelay_, __line__)')dnl
+
+
+;; 
+;; PASM macros
+;;
 
 .macro NOP
     MOV r0, r0
@@ -24,13 +36,18 @@
     CLR     r30.t14
 .endm
 
-.macro _NDELAY_CODE
+.macro _NDELAY
 .mparam ns, del, label
     MOV     r2, ns/10 - del/2 - 1
 label:  
     SUB     r2, r2, 1
     QBNE    label, r2, 0
 .endm
+
+
+;; 
+;; Program
+;;
 
 START:
 
@@ -39,9 +56,10 @@ START:
 MAINLOOP:
 
     SIGHIGH
-    NDELAY(30, 1)
+    ndelay(30, 1)
     SIGLOW
-    NDELAY(30, 3)
+    ndelay(30, 3)
+    NOP
 
     SUB     r1, r1, 1
     QBNE    MAINLOOP, r1, 0
