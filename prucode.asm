@@ -108,9 +108,8 @@ START:
     ;; Current byte offset (first two bytes are data length count)
     LDI     d.cur_byte_p, 2
     ;; End byte offset
-;    LBCO    r11.w1, c24, 0, 2
-;    ADD     r11.w1, r11.w1, 2
-    LDI     d.end_byte_p, 20
+    LBCO    d.end_byte_p, c24, 0, 2
+    ADD     d.end_byte_p, d.end_byte_p, 2
     ;; Transition low cycle count
     LDI     d.count_end_high, nsecs(DATA_T0H_NS)
     ;; End period cycle count
@@ -125,9 +124,9 @@ START:
 
     ;; Scope trigger
     DATAHIGH
-    ndelay(1000000, 0)
+    ndelay(10000, 0)
     DATALOW
-    ndelay(1000000, 0)
+    ndelay(10000, 0)
 
     ;; Start counter
     LBCO    r0, c28, 0, 4
