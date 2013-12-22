@@ -123,6 +123,12 @@ START:
     MOV     r0, 0
     SBCO    r0, c28, 0x0c, 4
 
+    ;; Scope trigger
+    DATAHIGH
+    ndelay(1000000, 0)
+    DATALOW
+    ndelay(1000000, 0)
+
     ;; Start counter
     LBCO    r0, c28, 0, 4
     SET     r0, r0, 3
@@ -163,7 +169,7 @@ WRITE_BIT_WAIT_HIGH:
     ;; Wait for end of period
 WRITE_BIT_WAIT_LOW:
     LBCO    r1, c28, 0x0c, 4
-    QBGT    WRITE_BIT_WAIT_LOW, r1, d.count_end_period
+    QBGT    WRITE_BIT_WAIT_LOW, r1, d.count_next_trans
 
     ;; Loop if we haven't hit the end
     QBLT    WRITE_BIT, d.end_byte_p, d.cur_byte_p
