@@ -23,7 +23,12 @@ int main(void)
 {
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-    uint8_t data[] = { 0x06, 0x00, 0xff, 0xff, 0xff, 0x55, 0x55, 0x55 };
+    uint8_t data[] = { 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff };
+    size_t msg_size = 2 + sizeof(data);
+
+    void *msg = malloc(msg_size);
+    *((uint16_t *) msg) = sizeof(data);
+    memcpy(msg+2, data, sizeof(data));
 
     prussdrv_init();
 
@@ -38,7 +43,7 @@ int main(void)
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
-    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, (unsigned int *)data, sizeof(data));
+    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, (unsigned int *)msg, msg_size);
     prussdrv_exec_program(PRU_NUM, "./prucode.bin");
 
     /* Wait until PRU0 has finished execution */
@@ -48,6 +53,8 @@ int main(void)
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable(PRU_NUM);
     prussdrv_exit();
+
+    free(msg);
 
     return 0;
 }
