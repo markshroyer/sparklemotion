@@ -118,11 +118,11 @@ START:
     MOV     r0, 0
     SBCO    r0, c28, 0x0c, 4
 
-    ;; Scope trigger
-    DATAHIGH
-    ndelay(10000, 0)
-    DATALOW
-    ndelay(10000, 0)
+;    ;; Scope trigger
+;    DATAHIGH
+;    ndelay(10000, 0)
+;    DATALOW
+;    ndelay(10000, 0)
 
     ;; Start counter
     LBCO    r0, c28, 0, 4

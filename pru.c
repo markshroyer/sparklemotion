@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
+#include <stdlib.h>
 
 
 #define PRU_NUM 	 0
@@ -18,17 +20,29 @@
 
 #define PRUSS0_SHARED_DATARAM    4
 
+#define NLEDS 5
+#define DATA_SZ (3 * NLEDS)
+#define MSG_SZ (2 + DATA_SZ)
+
 
 int main(void)
 {
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-    uint8_t data[] = { 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff };
-    size_t msg_size = 2 + sizeof(data);
+    void *msg;
+    uint8_t *data;
+    int led;
+    int color;
+    struct timespec delay = { 0, 100000000 };
 
-    void *msg = malloc(msg_size);
-    *((uint16_t *) msg) = sizeof(data);
-    memcpy(msg+2, data, sizeof(data));
+    msg = malloc(MSG_SZ);
+    if (! msg) {
+        printf("Could not allocate message buffer\n");
+        exit(1);
+    }
+
+    *((uint16_t *) msg) = MSG_SZ;
+    data = (uint8_t *)(msg + 2);
 
     prussdrv_init();
 
@@ -43,12 +57,22 @@ int main(void)
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
-    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, (unsigned int *)msg, msg_size);
-    prussdrv_exec_program(PRU_NUM, "./prucode.bin");
+    for (color = 0; 1; color = (color + 1) % 3) {
+        for (led = 0; led < NLEDS; led++) {
+            memset(data, 0, DATA_SZ);
+            data[3*led + color] = 0x80;
 
-    /* Wait until PRU0 has finished execution */
-    prussdrv_pru_wait_event(PRU_EVTOUT_0);
-    prussdrv_pru_clear_event(PRU0_ARM_INTERRUPT);
+            prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0,
+                                      (unsigned int *)msg, MSG_SZ);
+            prussdrv_exec_program(PRU_NUM, "./prucode.bin");
+
+            /* Wait until PRU0 has finished execution */
+            prussdrv_pru_wait_event(PRU_EVTOUT_0);
+            prussdrv_pru_clear_event(PRU0_ARM_INTERRUPT);
+
+            nanosleep(&delay, NULL);
+        }
+    }
 
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable(PRU_NUM);
