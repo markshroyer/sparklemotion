@@ -140,7 +140,6 @@ WRITE_BIT_WAIT_LOW:
 
     QBNE    WRITE_BIT, r24, 0
 
-    ADD     r21, r21, 1
     QBGT    WRITE_BYTE, r21, r20
 
     ;; 50ns reset time specified for ws2811
