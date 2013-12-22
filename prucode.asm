@@ -76,74 +76,50 @@ START:
     MOV     r1, CTPPR_0
     ST32    r0, r1
 
+    ;; Bit counter
+    LDI     r10, 24
+    ;; Transition low cycle count
+    LDI     r11, nsecs(350)
+    ;; End period cycle count
+    LDI     r12, nsecs(2500)
+
     ;; Disable and reset PRU cycle counter
     LBCO    r0, c28, 0, 4
     CLR     r0, r0, 3
     SBCO    r0, c28, 0, 4
-    MOV     r0, 1
+    MOV     r0, 0
     SBCO    r0, c28, 0x0c, 4
 
-    ;; Prepare message pointers:
-    ;; r20 = end of message address + 1
-    ;; r21 = next byte to encode
-    LBCO    r20, c24, 0, 4
-    ADD     r20, r20, 4
-    MOV     r21, 4
-
-    ;; Message counter:
-    ;; r22 = cycle start time
-    MOV     r22, 0
-
-    ;; Signal high and start counter
+    ;; Start counter
     LBCO    r0, c28, 0, 4
     SET     r0, r0, 3
-    SIGHIGH
     SBCO    r0, c28, 0, 4
-
-WRITE_BYTE:
-
-    SIGHIGH
-
-    ;; r23 = current byte
-    ;; r24 = bit number
-    MOV     r1, r21
-    LBCO    r23, c24, r21, 1
-    ADD     r21, r21, 1
-    LDI     r24, 8
 
 WRITE_BIT:
 
     SIGHIGH
 
-    SUB     r24, r24, 1
-    LDI     r0, nsecs(1200)
-    QBBS    WRITE_BIT_IS_ZERO, r23, r24
-    LDI     r0, nsecs(500)
-
-WRITE_BIT_IS_ZERO:
-
-    ADD     r0, r0, r22
-
 WRITE_BIT_WAIT_HIGH:
 
     LBCO    r1, c28, 0x0c, 4
-    QBGT    WRITE_BIT_WAIT_HIGH, r1, r0
+    QBGT    WRITE_BIT_WAIT_HIGH, r1, r11
 
     SIGLOW
 
 WRITE_BIT_WAIT_LOW:
 
-    LDI     r0, nsecs(2500)
-    ADD     r22, r22, r0
     LBCO    r1, c28, 0x0c, 4
-    QBGT    WRITE_BIT_WAIT_LOW, r1, r22
+    QBGT    WRITE_BIT_WAIT_LOW, r1, r12
 
-    QBNE    WRITE_BIT, r24, 0
-
-    QBGT    WRITE_BYTE, r21, r20
+    LDI     r0, nsecs(2500)
+    ADD     r11, r11, r0
+    ADD     r12, r12, r0
+    
+    SUB     r10, r10, 1
+    QBNE    WRITE_BIT, r10, 0
 
     ;; 50ns reset time specified for ws2811
-    ndelay(60, 0)
+    ndelay(50, 0)
 
     ;; Signal program completion
     MOV     r31.b0, PRU0_ARM_INTERRUPT+16
