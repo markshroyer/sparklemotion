@@ -3,3 +3,5 @@ pru
 *.bin
 prucode.p
 *.dtbo
+\#*\#
+.\#*
