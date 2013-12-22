@@ -68,6 +68,17 @@ label:
     SBBO    src,dst,#0x00,4
 .endm
 
+.struct GenData
+    .u16    cur_byte_p
+    .u16    end_byte_p
+    .u32    count_end_high
+    .u32    count_end_period
+    .u32    count_next_trans
+    .u8     bit_num
+.ends
+
+.assign     GenData, r10, r14.b0, d
+
 
 ;;; 
 ;;; Program
@@ -93,17 +104,17 @@ START:
     ST32    r0, r1
 
     ;; Current bit offset
-    LDI     r10.b0, 7
+    LDI     d.bit_num, 7
     ;; Current byte offset (first two bytes are data length count)
-    LDI     r11.w0, 2
+    LDI     d.cur_byte_p, 2
     ;; End byte offset
 ;    LBCO    r11.w1, c24, 0, 2
 ;    ADD     r11.w1, r11.w1, 2
-    LDI     r11.w1, 20
+    LDI     d.end_byte_p, 20
     ;; Transition low cycle count
-    LDI     r12, nsecs(DATA_T0H_NS)
+    LDI     d.count_end_high, nsecs(DATA_T0H_NS)
     ;; End period cycle count
-    LDI     r13, nsecs(DATA_T_NS)
+    LDI     d.count_end_period, nsecs(DATA_T_NS)
 
     ;; Disable and reset PRU cycle counter
     LBCO    r0, c28, 0, 4
@@ -122,7 +133,7 @@ WRITE_BIT:
     DATAHIGH
 
     ;; Adjust transition time if current bit is high
-    MOV     r14, r12
+    MOV     d.count_next_trans, d.count_end_high
 ;    LBCO    r4.b0, c24, r11.w0, 1
 ;    QBBC    CURRENT_BIT_IS_ZERO, r4.b0, r10.b0
 ;    ADD     r14, r14, nsecs(DATA_T1H_NS - DATA_T0H_NS)
@@ -131,35 +142,31 @@ WRITE_BIT:
     ;; Wait for end of T?H
 WRITE_BIT_WAIT_HIGH:
     LBCO    r1, c28, 0x0c, 4
-    QBGT    WRITE_BIT_WAIT_HIGH, r1, r14
+    QBGT    WRITE_BIT_WAIT_HIGH, r1, d.count_next_trans
 
     DATALOW
 
-    MOV     r14, r13
+    MOV     d.count_next_trans, d.count_end_period
 
     ;; Increment counter wait values
     LDI     r0, nsecs(DATA_T_NS)
-    ADD     r12, r12, r0
-    ADD     r13, r13, r0
+    ADD     d.count_end_high, d.count_end_high, r0
+    ADD     d.count_end_period, d.count_end_period, r0
 
 ;    ;; Move to next bit (and possibly next byte)
 ;    QBNE    BIT_OFFSET_NONZERO, r10.b0, 0
 ;    MOV     r10.b0, 8
-    ADD     r11.w0, r11.w0, 1
+    ADD     d.cur_byte_p, d.cur_byte_p, 0x0001
 ;BIT_OFFSET_NONZERO:
 ;    SUB     r10.b0, r10.b0, 1
 
     ;; Wait for end of period
 WRITE_BIT_WAIT_LOW:
     LBCO    r1, c28, 0x0c, 4
-    QBGT    WRITE_BIT_WAIT_LOW, r1, r14
+    QBGT    WRITE_BIT_WAIT_LOW, r1, d.count_end_period
 
     ;; Loop if we haven't hit the end
-    MOV     r5, 0
-    MOV     r6, 0
-    MOV     r5, r11.w0
-    MOV     r6, r11.w1
-    QBLT    WRITE_BIT, r6, r5
+    QBLT    WRITE_BIT, d.end_byte_p, d.cur_byte_p
 
     ;; 50ns reset time specified for ws2811
     ndelay(50, 0)
