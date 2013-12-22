@@ -133,7 +133,7 @@ WRITE_BIT_WAIT_HIGH:
 
 WRITE_BIT_WAIT_LOW:
 
-    MOV     r0, nsecs(2500)
+    LDI     r0, nsecs(2500)
     ADD     r22, r22, r0
     LBCO    r1, c28, 0x0c, 4
     QBGT    WRITE_BIT_WAIT_LOW, r1, r22
