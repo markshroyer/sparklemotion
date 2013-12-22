@@ -10,6 +10,7 @@
 ;; delay loop we write (for label arg of the _NDELAY PASM macro):
 define(`concat', $1$2)
 define(`ndelay', `_NDELAY $1, $2, concat(_ndelay_, __line__)')
+define(`ncount', `_NCOUNT $1, concat(_ncount_, __line__)')
 
 
 ;;; 
@@ -49,9 +50,31 @@ label:
     QBNE    label, r2, 0
 .endm
 
+.macro _NCOUNT
+.mparam ns, label
+label:
+    LBCO    r2, c28, 0x0c, 4
+    QBGT    label, r2, (ns)/5
+.endm
+
 .macro ST32
 .mparam src,dst
     SBBO    src,dst,#0x00,4
+.endm
+
+.macro CLRCOUNT
+    ;; Disable the counter
+    LBCO    r0, c28, 0, 4
+    CLR     r0, r0, 3
+    SBCO    r0, c28, 0, 4
+
+    ;; Clear the count
+    MOV     r1, 0
+    SBCO    r1, c28, 0x0c, 4
+
+    ;; (Re-)enable the counter
+    SET     r0, r0, 3
+    SBCO    r0, c28, 0, 4
 .endm
 
 
@@ -61,40 +84,23 @@ label:
 
 START:
 
-    MOV     r1, 1000
-
-    ;; Enable OCP master port
-
-    LBCO    r0, CONST_PRUCFG, 4, 4
-    CLR     r0, r0, 4      ; Clear SYSCFG[STANDBY_INIT] to enable OCP master port
-    SBCO    r0, CONST_PRUCFG, 4, 4
-
-    ;; Configure the programmable pointer register for PRU0 by setting
-    ;; c28_pointer[15:0] field to 0x0120.  This will make C28 point to
-    ;; 0x00012000 (PRU shared RAM).
-
-    MOV     r0, 0x00000120
+    ;; Make C28 point to the control register (0x22000)
+    MOV     r0, 0x00000220
     MOV     r1, CTPPR_0
     ST32    r0, r1
 
-    ;; Configure the programmable pointer register for PRU0 by setting
-    ;; c31_pointer[15:0] field to 0x0010.  This will make C31 point to
-    ;; 0x80001000 (DDR memory).
-
-    MOV     r0, 0x00100000
-    MOV     r1, CTPPR_1
-    ST32    r0, r1
+    MOV     r5, 1000
 
 MAINLOOP:
 
+    CLRCOUNT
     SIGHIGH
-    ndelay(30, 1)
+    ncount(30)
     SIGLOW
-    ndelay(30, 3)
-    NOP
+    ncount(60)
 
-    SUB     r1, r1, 1
-    QBNE    MAINLOOP, r1, 0
+    SUB     r5, r5, 1
+    QBNE    MAINLOOP, r5, 0
 
     ;; Signal program completion
     MOV     r31.b0, PRU0_ARM_INTERRUPT+16

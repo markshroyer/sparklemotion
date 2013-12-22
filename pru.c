@@ -7,12 +7,10 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 
 
 #define PRU_NUM 	 0
-#define ADDEND1	 	 0x98765400u
-#define ADDEND2		 0x12345678u
-#define ADDEND3		 0x10210210u
 
 #define DDR_BASEADDR     0x80000000
 #define OFFSET_DDR	 0x00001000
@@ -21,14 +19,11 @@
 #define PRUSS0_SHARED_DATARAM    4
 
 
-static int mem_fd;
-static void *ddrMem;
-
-
 int main(void)
 {
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+    unsigned int data[] = { 0xaaaaaaaa };
 
     prussdrv_init();
 
@@ -43,20 +38,7 @@ int main(void)
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
-    if (mem_fd < 0) {
-        printf("Failed to open /dev/mem (%s)\n", strerror(errno));
-        return -1;
-    }
-
-    /* map the DDR memory */
-    ddrMem = mmap(0, 0x0FFFFFFF, PROT_WRITE | PROT_READ, MAP_SHARED,
-                  mem_fd, DDR_BASEADDR);
-    if (ddrMem == NULL) {
-        printf("Failed to map the device (%s)\n", strerror(errno));
-        close(mem_fd);
-        return -1;
-    }
-
+    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, data, sizeof(data));
     prussdrv_exec_program(PRU_NUM, "./prucode.bin");
 
     /* Wait until PRU0 has finished execution */
@@ -66,8 +48,6 @@ int main(void)
     /* Disable PRU and close memory mapping*/
     prussdrv_pru_disable(PRU_NUM);
     prussdrv_exit();
-    munmap(ddrMem, 0x0FFFFFFF);
-    close(mem_fd);
 
     return 0;
 }
