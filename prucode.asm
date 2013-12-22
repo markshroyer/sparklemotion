@@ -12,15 +12,15 @@ define(`concat', $1$2)
 define(`ndelay', `_NDELAY $1, $2, concat(_ndelay_, __line__)')
 define(`ncount', `_NCOUNT $1, concat(_ncount_, __line__)')
 
-define(`nsecs', `$1 / 5')
+define(`nsecs', `($1) / 5')
 
 
 ;;; 
-;;; PASM defines
+;;; PASM macros
 ;;;
 
-#define DATA_T0H_NS 700
-#define DATA_T1H_NS 350
+#define DATA_T0H_NS 350
+#define DATA_T1H_NS 700
 #define DATA_T_NS 2500
 
 #define CONST_PRUCFG C4
@@ -31,10 +31,6 @@ define(`nsecs', `$1 / 5')
 #define CTPPR_0 0x22028
 #define CTPPR_1 0x2202C
 
-
-;;; 
-;;; PASM macros
-;;;
 
 .macro NOP
     MOV r0, r0
@@ -69,38 +65,32 @@ label:
 .endm
 
 .macro INC
-.mparam dst, inc
-    ADD     dst, dst, inc
+.mparam dst, val
+    ADD     dst, dst, val
 .endm
 
-.struct GenData
+.macro DEC
+.mparam dst, val
+    SUB     dst, dst, val
+.endm
+
+.struct Data
     .u16    cur_byte_p
     .u16    end_byte_p
     .u32    count_end_high
     .u32    count_end_period
     .u32    count_next_trans
+    .u8     byte
     .u8     bit_num
 .ends
 
-.assign     GenData, r10, r14.b0, d
+.assign     Data, r10, r14.b1, d
 
 
 ;;; 
 ;;; Program
 ;;;
 
-;; 
-;; Register file:
-;;
-;; r0-r9 = scratch
-;; r10.b0 = current bit offset
-;; r11.w0 = current byte offset
-;; r11.w1 = end byte offset
-;; r12 = T0H end at cycle count
-;; r13 = end period at cycle count
-;; r14 = next transition cycle count
-;; 
-    
 START:
 
     ;; Make C28 point to the control register (0x22000)
@@ -112,6 +102,7 @@ START:
     LDI     d.bit_num, 7
     ;; Current byte offset (first two bytes are data length count)
     LDI     d.cur_byte_p, 2
+    LBCO    d.byte, c24, d.cur_byte_p, 1
     ;; End byte offset
     LBCO    d.end_byte_p, c24, 0, 2
     INC     d.end_byte_p, 2
@@ -144,10 +135,10 @@ WRITE_BIT:
 
     ;; Adjust transition time if current bit is high
     MOV     d.count_next_trans, d.count_end_high
-;    LBCO    r4.b0, c24, r11.w0, 1
-;    QBBC    CURRENT_BIT_IS_ZERO, r4.b0, r10.b0
-;    ADD     r14, r14, nsecs(DATA_T1H_NS - DATA_T0H_NS)
-;CURRENT_BIT_IS_ZERO:
+    QBBC    CURRENT_BIT_IS_ZERO, d.byte, d.bit_num
+    LDI     r4, nsecs(DATA_T1H_NS - DATA_T0H_NS)
+    INC     d.count_next_trans, r4
+CURRENT_BIT_IS_ZERO:
 
     ;; Wait for end of T?H
 WRITE_BIT_WAIT_HIGH:
@@ -163,12 +154,13 @@ WRITE_BIT_WAIT_HIGH:
     INC     d.count_end_high, r0
     INC     d.count_end_period, r0
 
-;    ;; Move to next bit (and possibly next byte)
-;    QBNE    BIT_OFFSET_NONZERO, r10.b0, 0
-;    MOV     r10.b0, 8
+    ;; Move to next bit (and possibly next byte)
+    QBNE    BIT_OFFSET_NONZERO, d.bit_num, 0
     INC     d.cur_byte_p, 1
-;BIT_OFFSET_NONZERO:
-;    SUB     r10.b0, r10.b0, 1
+    LBCO    d.byte, c24, d.cur_byte_p, 1
+    MOV     d.bit_num, 8
+BIT_OFFSET_NONZERO:
+    DEC     d.bit_num, 1
 
     ;; Wait for end of period
 WRITE_BIT_WAIT_LOW:
