@@ -13,7 +13,7 @@ all: xmastree.dtbo prucode.bin pru
 	m4 $< > $@
 
 %.bin: %.p
-	$(PASM) -b $<
+	$(PASM) -V2 -b $<
 
 %.o: %.c
 	cc $(CFLAGS) -c -o $@ $<
