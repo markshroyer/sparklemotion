@@ -23,7 +23,7 @@ int main(void)
 {
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-    unsigned int data[] = { 0x00 };
+    uint8_t data[] = { 0x03, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff };
 
     prussdrv_init();
 
