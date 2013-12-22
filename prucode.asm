@@ -89,15 +89,16 @@ START:
     MOV     r1, CTPPR_0
     ST32    r0, r1
 
-    MOV     r5, 1000
+    LBCO    r5, c24, 0, 4
 
 MAINLOOP:
 
     CLRCOUNT
+
     SIGHIGH
-    ncount(30)
+    ncount(100)
     SIGLOW
-    ncount(60)
+    ncount(100)
 
     SUB     r5, r5, 1
     QBNE    MAINLOOP, r5, 0
