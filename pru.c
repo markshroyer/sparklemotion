@@ -23,7 +23,7 @@ int main(void)
 {
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-    unsigned int data[] = { 100 };
+    unsigned int data[] = { 0x00 };
 
     prussdrv_init();
 
@@ -38,7 +38,7 @@ int main(void)
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
 
-    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, data, sizeof(data));
+    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, (unsigned int *)data, sizeof(data));
     prussdrv_exec_program(PRU_NUM, "./prucode.bin");
 
     /* Wait until PRU0 has finished execution */
