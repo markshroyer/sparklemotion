@@ -68,6 +68,11 @@ label:
     SBBO    src,dst,#0x00,4
 .endm
 
+.macro INC
+.mparam dst, inc
+    ADD     dst, dst, inc
+.endm
+
 .struct GenData
     .u16    cur_byte_p
     .u16    end_byte_p
@@ -109,7 +114,7 @@ START:
     LDI     d.cur_byte_p, 2
     ;; End byte offset
     LBCO    d.end_byte_p, c24, 0, 2
-    ADD     d.end_byte_p, d.end_byte_p, 2
+    INC     d.end_byte_p, 2
     ;; Transition low cycle count
     LDI     d.count_end_high, nsecs(DATA_T0H_NS)
     ;; End period cycle count
@@ -155,13 +160,13 @@ WRITE_BIT_WAIT_HIGH:
 
     ;; Increment counter wait values
     LDI     r0, nsecs(DATA_T_NS)
-    ADD     d.count_end_high, d.count_end_high, r0
-    ADD     d.count_end_period, d.count_end_period, r0
+    INC     d.count_end_high, r0
+    INC     d.count_end_period, r0
 
 ;    ;; Move to next bit (and possibly next byte)
 ;    QBNE    BIT_OFFSET_NONZERO, r10.b0, 0
 ;    MOV     r10.b0, 8
-    ADD     d.cur_byte_p, d.cur_byte_p, 0x0001
+    INC     d.cur_byte_p, 1
 ;BIT_OFFSET_NONZERO:
 ;    SUB     r10.b0, r10.b0, 1
 
