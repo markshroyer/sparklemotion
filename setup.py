@@ -17,5 +17,6 @@ setup(
     author='Mark Shroyer',
     author_email='code@markshroyer.com',
     license='BSD',
+    py_modules=['sparkle'],
     ext_modules=[sparkle_ext],
     )
