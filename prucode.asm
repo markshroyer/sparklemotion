@@ -1,5 +1,7 @@
+;; Run this through M4 before handing to PASM...
+
 .origin 0
-.entrypoint START
+.entrypoint start
 
 
 ;;; 
@@ -9,8 +11,8 @@
 ;; So that we don't have to manually declare a unique label name for each
 ;; delay loop we write (for label arg of the _NDELAY PASM macro):
 define(`concat', $1$2)
-define(`ndelay', `_NDELAY $1, $2, concat(_ndelay_, __line__)')
-define(`ncount', `_NCOUNT $1, concat(_ncount_, __line__)')
+define(`ndelay', `_ndelay $1, $2, concat(_ndelay_, __line__)')
+define(`ncount', `_ncount $1, concat(_ncount_, __line__)')
 
 define(`nsecs', `($1) / 5')
 
@@ -34,46 +36,46 @@ define(`nsecs', `($1) / 5')
 #define ARM_PRU0_INTERRUPT 21
 
 
-.macro NOP
-    MOV r0, r0
+.macro nop
+    mov r0, r0
 .endm
 
-.macro DATAHIGH
-    SET     r30.t14
+.macro datahigh
+    set     r30.t14
 .endm
 
-.macro DATALOW
-    CLR     r30.t14
+.macro datalow
+    clr     r30.t14
 .endm
 
-.macro _NDELAY
+.macro _ndelay
 .mparam ns, del, label
-    MOV     r2, ns/10 - del/2 - 1
+    mov     r2, ns/10 - del/2 - 1
 label:  
-    SUB     r2, r2, 1
-    QBNE    label, r2, 0
+    sub     r2, r2, 1
+    qbne    label, r2, 0
 .endm
 
-.macro _NCOUNT
+.macro _ncount
 .mparam ns, label
 label:
-    LBCO    r2, c28, 0x0c, 4
-    QBGT    label, r2, (ns)/5
+    lbco    r2, c28, 0x0c, 4
+    qbgt    label, r2, (ns)/5
 .endm
 
-.macro ST32
+.macro st32
 .mparam src,dst
-    SBBO    src,dst,#0x00,4
+    sbbo    src,dst,#0x00,4
 .endm
 
-.macro INC
+.macro inc
 .mparam dst, val
-    ADD     dst, dst, val
+    add     dst, dst, val
 .endm
 
-.macro DEC
+.macro dec
 .mparam dst, val
-    SUB     dst, dst, val
+    sub     dst, dst, val
 .endm
 
 .struct Data
@@ -93,112 +95,116 @@ label:
 ;;; Program
 ;;;
 
-START:
+start:
 
 ;    ;; Enable master OCP
-;    LBCO    r0, c4, 4, 4
-;    CLR     r0.t4
-;    SBCO    r0, c4, 4, 4
+;    lbco    r0, c4, 4, 4
+;    clr     r0.t4
+;    sbco    r0, c4, 4, 4
 
     ;; Make C28 point to the control register (0x22000)
-    MOV     r0, 0x00000220
-    MOV     r1, CTPPR_0
-    ST32    r0, r1
+    mov     r0, 0x00000220
+    mov     r1, CTPPR_0
+    st32    r0, r1
 
 ;    ;; Wake up when host sends event
-;    LBCO    r0, c28, 0x08, 4
-;    SET     r0, r0, ARM_PRU0_INTERRUPT
-;    SBCO    r0, c28, 0x08, 4
+;    lbco    r0, c28, 0x08, 4
+;    set     r0, r0, ARM_PRU0_INTERRUPT
+;    sbco    r0, c28, 0x08, 4
 
-AWAIT_DATA:
-
+await_data:
+    
     ;; Wait for event from host, indicating that data is ready
-    SLP     1
-    QBBC    AWAIT_DATA, r31, 30
+    slp     1
+    qbbc    await_data, r31, 30
 
     ;; Clear interrupt
-    LDI     r0, ARM_PRU0_INTERRUPT
-    SBCO    r0, c0, 0x24, 4
+    ldi     r0, ARM_PRU0_INTERRUPT
+    sbco    r0, c0, 0x24, 4
 
     ;; Current bit offset
-    LDI     d.bit_num, 7
+    ldi     d.bit_num, 7
+
     ;; Current byte offset (first two bytes are data length count)
-    LDI     d.cur_byte_p, 2
-    LBCO    d.byte, c24, d.cur_byte_p, 1
+    ldi     d.cur_byte_p, 2
+    lbco    d.byte, c24, d.cur_byte_p, 1
+
     ;; End byte offset
-    LBCO    d.end_byte_p, c24, 0, 2
-    QBNE    NON_NULL_MESSAGE, d.end_byte_p, 0
-    SLP     0
-NON_NULL_MESSAGE:
-    INC     d.end_byte_p, 2
+    lbco    d.end_byte_p, c24, 0, 2
+    qbne    _non_null_message, d.end_byte_p, 0
+    slp     0
+_non_null_message:
+    inc     d.end_byte_p, 2
+
     ;; Transition low cycle count
-    LDI     d.count_end_high, nsecs(DATA_T0H_NS)
+    ldi     d.count_end_high, nsecs(DATA_T0H_NS)
+
     ;; End period cycle count
-    LDI     d.count_end_period, nsecs(DATA_T_NS)
+    ldi     d.count_end_period, nsecs(DATA_T_NS)
 
     ;; Disable and reset PRU cycle counter
-    LBCO    r0, c28, 0, 4
-    CLR     r0, r0, 3
-    SBCO    r0, c28, 0, 4
-    MOV     r0, 0
-    SBCO    r0, c28, 0x0c, 4
+    lbco    r0, c28, 0, 4
+    clr     r0, r0, 3
+    sbco    r0, c28, 0, 4
+    mov     r0, 0
+    sbco    r0, c28, 0x0c, 4
 
 ;    ;; Scope trigger
-;    DATAHIGH
+;    datahigh
 ;    ndelay(10000, 0)
-;    DATALOW
+;    datalow
 ;    ndelay(10000, 0)
 
     ;; Start counter
-    LBCO    r0, c28, 0, 4
-    SET     r0, r0, 3
-    SBCO    r0, c28, 0, 4
+    lbco    r0, c28, 0, 4
+    set     r0, r0, 3
+    sbco    r0, c28, 0, 4
 
-WRITE_BIT:
+write_bit:
 
-    DATAHIGH
+    datahigh
 
     ;; Adjust transition time if current bit is high
-    MOV     d.count_next_trans, d.count_end_high
-    QBBC    CURRENT_BIT_IS_ZERO, d.byte, d.bit_num
-    LDI     r4, nsecs(DATA_T1H_NS - DATA_T0H_NS)
-    INC     d.count_next_trans, r4
-CURRENT_BIT_IS_ZERO:
+    mov     d.count_next_trans, d.count_end_high
+    qbbc    _current_bit_is_zero, d.byte, d.bit_num
+    ldi     r4, nsecs(DATA_T1H_NS - DATA_T0H_NS)
+    inc     d.count_next_trans, r4
+_current_bit_is_zero:
 
     ;; Wait for end of T?H
-WRITE_BIT_WAIT_HIGH:
-    LBCO    r1, c28, 0x0c, 4
-    QBGT    WRITE_BIT_WAIT_HIGH, r1, d.count_next_trans
+_wait_high:
+    lbco    r1, c28, 0x0c, 4
+    qbgt    _wait_high, r1, d.count_next_trans
 
-    DATALOW
+    datalow
 
-    MOV     d.count_next_trans, d.count_end_period
+    mov     d.count_next_trans, d.count_end_period
 
     ;; Increment counter wait values
-    LDI     r0, nsecs(DATA_T_NS)
-    INC     d.count_end_high, r0
-    INC     d.count_end_period, r0
+    ldi     r0, nsecs(DATA_T_NS)
+    inc     d.count_end_high, r0
+    inc     d.count_end_period, r0
 
     ;; Move to next bit (and possibly next byte)
-    QBNE    BIT_OFFSET_NONZERO, d.bit_num, 0
-    INC     d.cur_byte_p, 1
-    LBCO    d.byte, c24, d.cur_byte_p, 1
-    MOV     d.bit_num, 8
-BIT_OFFSET_NONZERO:
-    DEC     d.bit_num, 1
+    qbne    _bit_offset_nonzero, d.bit_num, 0
+    inc     d.cur_byte_p, 1
+    lbco    d.byte, c24, d.cur_byte_p, 1
+    mov     d.bit_num, 8
+_bit_offset_nonzero:
+    dec     d.bit_num, 1
 
     ;; Wait for end of period
-WRITE_BIT_WAIT_LOW:
-    LBCO    r1, c28, 0x0c, 4
-    QBGT    WRITE_BIT_WAIT_LOW, r1, d.count_next_trans
+_wait_low:
+    lbco    r1, c28, 0x0c, 4
+    qbgt    _wait_low, r1, d.count_next_trans
 
     ;; Loop if we haven't hit the end
-    QBLT    WRITE_BIT, d.end_byte_p, d.cur_byte_p
+    qblt    write_bit, d.end_byte_p, d.cur_byte_p
 
     ;; 50ns reset time specified for ws2811
     ndelay(50, 0)
 
     ;; Signal program completion
-    MOV     r31.b0, PRU0_ARM_INTERRUPT+16
+    mov     r31.b0, PRU0_ARM_INTERRUPT+16
 
-    QBA     AWAIT_DATA
+    qba     await_data
