@@ -26,14 +26,18 @@ define(`nsecs', `($1) / 5')
 #define DATA_T1H_NS 700
 #define DATA_T_NS 2500
 
-#define CONST_PRUCFG C4
-#define PRU0_ARM_INTERRUPT 19
+#define CONST_INTC c0
+#define CONST_PRUCFG c4
+#define CONST_DATA c24
+#define CONST_CTRL c28
+
 #define GPIO1 0x4804c000
 #define GPIO1_CLEARDATAOUT 0x190
 #define GPIO1_SETDATAOUT 0x194
 #define CTPPR_0 0x22028
 #define CTPPR_1 0x2202C
 
+#define PRU0_ARM_INTERRUPT 19
 #define ARM_PRU0_INTERRUPT 21
 
 
@@ -60,14 +64,14 @@ label:
 .macro _ncount
 .mparam ns, label
 label:
-    lbco    r2, c28, 0x0c, 4
+    lbco    r2, CONST_CTRL, 0x0c, 4
     qbgt    label, r2, (ns)/5
 .endm
 
 .macro _waitcount
 .mparam count, label
 label:
-    lbco    r2, c28, 0x0c, 4
+    lbco    r2, CONST_CTRL, 0x0c, 4
     qbgt    label, r2, count
 .endm
 
@@ -106,9 +110,9 @@ label:
 start:
 
 ;    ;; Enable master OCP
-;    lbco    r0, c4, 4, 4
+;    lbco    r0, CONST_PRUCFG, 4, 4
 ;    clr     r0.t4
-;    sbco    r0, c4, 4, 4
+;    sbco    r0, CONST_PRUCFG, 4, 4
 
     ;; Make C28 point to the control register (0x22000)
     mov     r0, 0x00000220
@@ -116,9 +120,9 @@ start:
     st32    r0, r1
 
 ;    ;; Wake up when host sends event
-;    lbco    r0, c28, 0x08, 4
+;    lbco    r0, CONST_CTRL, 0x08, 4
 ;    set     r0, r0, ARM_PRU0_INTERRUPT
-;    sbco    r0, c28, 0x08, 4
+;    sbco    r0, CONST_CTRL, 0x08, 4
 
 await_data:
     
@@ -135,10 +139,10 @@ await_data:
 
     ;; Current byte offset (first two bytes are data length count)
     ldi     d.cur_byte_p, 2
-    lbco    d.byte, c24, d.cur_byte_p, 1
+    lbco    d.byte, CONST_DATA, d.cur_byte_p, 1
 
     ;; End byte offset
-    lbco    d.end_byte_p, c24, 0, 2
+    lbco    d.end_byte_p, CONST_DATA, 0, 2
     qbne    _non_null_message, d.end_byte_p, 0
     slp     0
 _non_null_message:
@@ -174,10 +178,10 @@ write_bit:
 
     ;; Adjust transition time if current bit is high
     mov     d.count_next_trans, d.count_end_high
-    qbbc    _current_bit_is_zero, d.byte, d.bit_num
+    qbbc    _sending_zero, d.byte, d.bit_num
     ldi     r4, nsecs(DATA_T1H_NS - DATA_T0H_NS)
     inc     d.count_next_trans, r4
-_current_bit_is_zero:
+_sending_zero:
     waitcount(d.count_next_trans)
 
     datalow
@@ -190,11 +194,11 @@ _current_bit_is_zero:
     inc     d.count_end_period, r0
 
     ;; Move to next bit (and possibly next byte)
-    qbne    _bit_offset_nonzero, d.bit_num, 0
+    qbne    _same_byte, d.bit_num, 0
     inc     d.cur_byte_p, 1
-    lbco    d.byte, c24, d.cur_byte_p, 1
+    lbco    d.byte, CONST_DATA, d.cur_byte_p, 1
     mov     d.bit_num, 8
-_bit_offset_nonzero:
+_same_byte:
     dec     d.bit_num, 1
 
     waitcount(d.count_next_trans)
