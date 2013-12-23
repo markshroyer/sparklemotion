@@ -7,14 +7,12 @@ function setColor(color) {
     });
 }
 
-$(document).ready(function () {
-    $('button[name="red"]').click(function () {
-        setColor('#ff0000');
-    });
-    $('button[name="green"]').click(function () {
-        setColor('#00ff00');
-    });
-    $('button[name="blue"]').click(function () {
-        setColor('#0000ff');
+$(document).ready(function ($) {
+    $('#color-picker').iris({
+        hide: false,
+        width: 480,
+        change: function(event, ui) {
+            setColor(ui.color.toString());
+        }
     });
 });
