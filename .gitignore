@@ -1,8 +1,11 @@
+*.pyc
 *.o
 *.bin
-prucode.p
 *.dtbo
+
 \#*\#
 .\#*
+
+prucode.p
 demo
 build
