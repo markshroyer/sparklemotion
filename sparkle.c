@@ -1,3 +1,5 @@
+#include "sparkle.h"
+
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
 
@@ -7,9 +9,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdint.h>
-#include <time.h>
-#include <stdlib.h>
 
 
 #define PRU_NUM 	 0
@@ -19,9 +18,6 @@
 #define OFFSET_SHAREDRAM 2048		//equivalent with 0x00002000
 
 #define PRUSS0_SHARED_DATARAM    4
-
-#define NLEDS 60
-#define DATA_SZ (3 * NLEDS)
 
 
 int sparkle_init(void)
@@ -40,7 +36,7 @@ int sparkle_init(void)
 
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
-    prussdrv_exec_program(PRU_NUM, "./prucode.bin");
+    prussdrv_exec_program(PRU_NUM, "./sparkle.bin");
 
     return 0;
 }
@@ -66,35 +62,3 @@ void sparkle_send(uint32_t buf_sz, const uint8_t *buf)
     prussdrv_pru_clear_event(PRU0_ARM_INTERRUPT);
 }
 
-int main(void)
-{
-    uint8_t *data;
-    int led;
-    int color;
-    struct timespec delay = { 0, 20000000 };
-
-    if (sparkle_init() < 0) {
-        fprintf(stderr, "Could not initialize sparkle\n");
-        exit(1);
-    }
-
-    data = malloc(DATA_SZ);
-    if (! data) {
-        fprintf(stderr, "Could not allocate data buffer\n");
-        exit(1);
-    }
-
-    for (color = 0; 1; color = (color + 1) % 3) {
-        for (led = 0; led < NLEDS; led++) {
-            memset(data, 0, DATA_SZ);
-            data[3*led + color] = 0x7f;
-
-            sparkle_send(DATA_SZ, data);
-            nanosleep(&delay, NULL);
-        }
-    }
-
-    sparkle_exit();
-
-    return 0;
-}

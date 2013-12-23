@@ -1,27 +1,32 @@
 DTC = dtc
 PASM = pasm
+CC = gcc
+M4 = m4
 
-CFLAGS += -Wall -I/usr/local/include
+CFLAGS += -Wall -Werror -I/usr/local/include
 LDFLAGS += -L/usr/local/lib -lprussdrv -lpthread
 
-all: xmastree.dtbo prucode.bin pru
+OBJECTS = demo.o sparkle.o
+HEADERS = sparkle.h
+
+all: sparkle.dtbo sparkle.bin demo
 
 %.dtbo: %.dts
 	$(DTC) -I dts -O dtb -o $@ -@ $<
 
 %.p: %.asm
-	m4 $< > $@
+	$(M4) $< > $@
 
 %.bin: %.p
 	$(PASM) -V2 -b $<
 
 %.o: %.c
-	cc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-pru: pru.o
-	cc $(CFLAGS) -o $@ $< $(LDFLAGS)
+demo: $(OBJECTS) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
 
 clean:
-	rm -f pru *.o prucode.p *.bin *.dtbo
+	rm -f *.o sparkle.p *.bin *.dtbo demo
 
 .PHONY: clean
