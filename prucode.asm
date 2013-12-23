@@ -95,10 +95,10 @@ label:
 
 START:
 
-    ;; Enable master OCP
-    LBCO    r0, c4, 4, 4
-    CLR     r0.t4
-    SBCO    r0, c4, 4, 4
+;    ;; Enable master OCP
+;    LBCO    r0, c4, 4, 4
+;    CLR     r0.t4
+;    SBCO    r0, c4, 4, 4
 
     ;; Make C28 point to the control register (0x22000)
     MOV     r0, 0x00000220
@@ -113,7 +113,7 @@ START:
 AWAIT_DATA:
 
     ;; Wait for event from host, indicating that data is ready
-;    SLP     1
+    SLP     1
     QBBC    AWAIT_DATA, r31, 30
 
     ;; Clear interrupt
@@ -127,6 +127,9 @@ AWAIT_DATA:
     LBCO    d.byte, c24, d.cur_byte_p, 1
     ;; End byte offset
     LBCO    d.end_byte_p, c24, 0, 2
+    QBNE    NON_NULL_MESSAGE, d.end_byte_p, 0
+    SLP     0
+NON_NULL_MESSAGE:
     INC     d.end_byte_p, 2
     ;; Transition low cycle count
     LDI     d.count_end_high, nsecs(DATA_T0H_NS)
