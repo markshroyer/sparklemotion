@@ -20,6 +20,8 @@ int main(void)
         exit(1);
     }
 
+    sparkle_max_luminance = 0xff;
+
     data = malloc(DATA_SZ);
     if (! data) {
         fprintf(stderr, "Could not allocate data buffer\n");
@@ -29,9 +31,9 @@ int main(void)
     for (color = 0; 1; color = (color + 1) % 3) {
         for (led = 0; led < NLEDS; led++) {
             memset(data, 0, DATA_SZ);
-            data[3*led + color] = 0x7f;
+            data[3*led + color] = 0xff;
 
-            sparkle_send(DATA_SZ, data);
+            sparkle_write(data, DATA_SZ);
             nanosleep(&delay, NULL);
         }
     }
