@@ -22,65 +22,79 @@
 
 #define NLEDS 60
 #define DATA_SZ (3 * NLEDS)
-#define MSG_SZ (2 + DATA_SZ)
 
 
-int main(void)
+int sparkle_init(void)
 {
     unsigned int ret;
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
-    void *msg;
-    uint8_t *data;
-    int led;
-    int color;
-    struct timespec delay = { 0, 20000000 };
-
-    msg = malloc(MSG_SZ);
-    if (! msg) {
-        printf("Could not allocate message buffer\n");
-        exit(1);
-    }
-
-    *((uint16_t *) msg) = MSG_SZ;
-    data = (uint8_t *)(msg + 2);
 
     prussdrv_init();
 
     /* Open PRU Interrupt */
     ret = prussdrv_open(PRU_EVTOUT_0);
-    if (ret)
-    {
+    if (ret) {
         printf("prussdrv_open open failed\n");
-        return ret;
+        return -1;
     }
 
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
     prussdrv_exec_program(PRU_NUM, "./prucode.bin");
 
+    return 0;
+}
+
+void sparkle_exit(void)
+{
+    /* Disable PRU and close memory mapping*/
+    prussdrv_pru_disable(PRU_NUM);
+    prussdrv_exit();
+}
+
+void sparkle_send(uint32_t buf_sz, const uint8_t *buf)
+{
+    /* Write data */
+    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0,
+                              (unsigned int *)&buf_sz, sizeof(buf_sz));
+    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 1,
+                              (unsigned int *)buf, buf_sz);
+    prussdrv_pru_send_event(ARM_PRU0_INTERRUPT);
+
+    /* Wait until PRU0 has finished execution */
+    prussdrv_pru_wait_event(PRU_EVTOUT_0);
+    prussdrv_pru_clear_event(PRU0_ARM_INTERRUPT);
+}
+
+int main(void)
+{
+    uint8_t *data;
+    int led;
+    int color;
+    struct timespec delay = { 0, 20000000 };
+
+    if (sparkle_init() < 0) {
+        fprintf(stderr, "Could not initialize sparkle\n");
+        exit(1);
+    }
+
+    data = malloc(DATA_SZ);
+    if (! data) {
+        fprintf(stderr, "Could not allocate data buffer\n");
+        exit(1);
+    }
+
     for (color = 0; 1; color = (color + 1) % 3) {
         for (led = 0; led < NLEDS; led++) {
             memset(data, 0, DATA_SZ);
-            data[3*led + color] = 0x80;
+            data[3*led + color] = 0x7f;
 
-            /* Write data */
-            prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0,
-                                      (unsigned int *)msg, MSG_SZ);
-            prussdrv_pru_send_event(ARM_PRU0_INTERRUPT);
-
-            /* Wait until PRU0 has finished execution */
-            prussdrv_pru_wait_event(PRU_EVTOUT_0);
-            prussdrv_pru_clear_event(PRU0_ARM_INTERRUPT);
-
+            sparkle_send(DATA_SZ, data);
             nanosleep(&delay, NULL);
         }
     }
 
-    /* Disable PRU and close memory mapping*/
-    prussdrv_pru_disable(PRU_NUM);
-    prussdrv_exit();
-
-    free(msg);
+    sparkle_exit();
 
     return 0;
 }

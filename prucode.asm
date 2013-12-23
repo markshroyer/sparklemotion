@@ -137,16 +137,16 @@ await_data:
     ;; Current bit offset
     ldi     d.bit_num, 7
 
-    ;; Current byte offset (first two bytes are data length count)
-    ldi     d.cur_byte_p, 2
+    ;; Current byte offset (first four bytes are data length count)
+    ldi     d.cur_byte_p, 4
     lbco    d.byte, CONST_DATA, d.cur_byte_p, 1
 
     ;; End byte offset
-    lbco    d.end_byte_p, CONST_DATA, 0, 2
+    lbco    d.end_byte_p, CONST_DATA, 0, 4      ; Loading into 16-bit reg
     qbne    _non_null_message, d.end_byte_p, 0
     slp     0
 _non_null_message:
-    inc     d.end_byte_p, 2
+    inc     d.end_byte_p, 4
 
     ;; Transition low cycle count
     ldi     d.count_end_high, nsecs(DATA_T0H_NS)
