@@ -41,7 +41,7 @@ int sparkle_init(void)
 
     /* Get the interrupt initialized */
     prussdrv_pruintc_init(&pruss_intc_initdata);
-    prussdrv_exec_program(PRU_NUM, "./sparkle.bin");
+    prussdrv_exec_program(PRU_NUM, "/lib/firmware/sparkle.bin");
 
     adj_buf = malloc(BUF_MAX);
     if (! adj_buf) {
