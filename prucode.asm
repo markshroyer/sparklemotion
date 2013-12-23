@@ -31,6 +31,8 @@ define(`nsecs', `($1) / 5')
 #define CTPPR_0 0x22028
 #define CTPPR_1 0x2202C
 
+#define ARM_PRU0_INTERRUPT 21
+
 
 .macro NOP
     MOV r0, r0
@@ -93,10 +95,30 @@ label:
 
 START:
 
+    ;; Enable master OCP
+    LBCO    r0, c4, 4, 4
+    CLR     r0.t4
+    SBCO    r0, c4, 4, 4
+
     ;; Make C28 point to the control register (0x22000)
     MOV     r0, 0x00000220
     MOV     r1, CTPPR_0
     ST32    r0, r1
+
+;    ;; Wake up when host sends event
+;    LBCO    r0, c28, 0x08, 4
+;    SET     r0, r0, ARM_PRU0_INTERRUPT
+;    SBCO    r0, c28, 0x08, 4
+
+AWAIT_DATA:
+
+    ;; Wait for event from host, indicating that data is ready
+;    SLP     1
+    QBBC    AWAIT_DATA, r31, 30
+
+    ;; Clear interrupt
+    LDI     r0, ARM_PRU0_INTERRUPT
+    SBCO    r0, c0, 0x24, 4
 
     ;; Current bit offset
     LDI     d.bit_num, 7
@@ -175,4 +197,5 @@ WRITE_BIT_WAIT_LOW:
 
     ;; Signal program completion
     MOV     r31.b0, PRU0_ARM_INTERRUPT+16
-    HALT
+
+    QBA     AWAIT_DATA
