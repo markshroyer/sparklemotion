@@ -13,6 +13,7 @@
 define(`concat', $1$2)
 define(`ndelay', `_ndelay $1, $2, concat(_ndelay_, __line__)')
 define(`ncount', `_ncount $1, concat(_ncount_, __line__)')
+define(`waitcount', `_waitcount $1, concat(_waitcount_, __line__)')
 
 define(`nsecs', `($1) / 5')
 
@@ -61,6 +62,13 @@ label:
 label:
     lbco    r2, c28, 0x0c, 4
     qbgt    label, r2, (ns)/5
+.endm
+
+.macro _waitcount
+.mparam count, label
+label:
+    lbco    r2, c28, 0x0c, 4
+    qbgt    label, r2, count
 .endm
 
 .macro st32
@@ -170,11 +178,7 @@ write_bit:
     ldi     r4, nsecs(DATA_T1H_NS - DATA_T0H_NS)
     inc     d.count_next_trans, r4
 _current_bit_is_zero:
-
-    ;; Wait for end of T?H
-_wait_high:
-    lbco    r1, c28, 0x0c, 4
-    qbgt    _wait_high, r1, d.count_next_trans
+    waitcount(d.count_next_trans)
 
     datalow
 
@@ -193,10 +197,7 @@ _wait_high:
 _bit_offset_nonzero:
     dec     d.bit_num, 1
 
-    ;; Wait for end of period
-_wait_low:
-    lbco    r1, c28, 0x0c, 4
-    qbgt    _wait_low, r1, d.count_next_trans
+    waitcount(d.count_next_trans)
 
     ;; Loop if we haven't hit the end
     qblt    write_bit, d.end_byte_p, d.cur_byte_p
