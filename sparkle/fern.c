@@ -20,7 +20,7 @@ int main(void)
         exit(1);
     }
 
-    sparkle_max_luminance = 0x7f;
+    sparkle_max_luminance = 0x60;
 
     data = malloc(DATA_SZ);
     if (! data) {

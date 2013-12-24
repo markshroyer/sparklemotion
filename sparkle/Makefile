@@ -9,7 +9,7 @@ LDFLAGS += -L/usr/local/lib -lprussdrv -lpthread
 OBJECTS = sparkle.o
 HEADERS = sparkle.h
 
-all: sparkle.dtbo sparkle.bin demo
+all: sparkle.dtbo sparkle.bin demo fern fern2 xmas2
 
 %.dtbo: %.dts
 	$(DTC) -I dts -O dtb -o $@ -@ $<
@@ -26,8 +26,14 @@ all: sparkle.dtbo sparkle.bin demo
 demo: demo.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ demo.o $(OBJECTS) $(LDFLAGS)
 
+xmas2: xmas2.o $(OBJECTS) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ xmas2.o $(OBJECTS) $(LDFLAGS) -lm
+
 fern: fern.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ fern.o $(OBJECTS) $(LDFLAGS)
+
+fern2: fern2.o $(OBJECTS) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ fern2.o $(OBJECTS) $(LDFLAGS)
 
 python: _sparkle.c $(OBJECTS) $(HEADERS)
 	python setup.py build
