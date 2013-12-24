@@ -129,9 +129,10 @@ await_data:
     ;; Let the host know we're ready for data
     mov     r31.b0, PRU0_ARM_INTERRUPT+16
 
-    ;; Wait for event from host, indicating that data is ready
-;    slp     1
-    qbbc    await_data, r31, 30
+    ;; Wait for event from host indicating we have something to do
+_await_interrupt:
+    slp     1
+    qbbc    _await_interrupt, r31, 30
 
     ;; Clear interrupt
     ldi     r0, ARM_PRU0_INTERRUPT
