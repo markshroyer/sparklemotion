@@ -119,10 +119,10 @@ start:
     mov     r1, CTPPR_0
     st32    r0, r1
 
-;    ;; Wake up when host sends event
-;    lbco    r0, CONST_CTRL, 0x08, 4
-;    set     r0, r0, ARM_PRU0_INTERRUPT
-;    sbco    r0, CONST_CTRL, 0x08, 4
+    ;; Wake up when host sends event
+    lbco    r0, CONST_CTRL, 0x08, 4
+    set     r0, r0, 30
+    sbco    r0, CONST_CTRL, 0x08, 4
 
 await_data:
     
