@@ -127,7 +127,7 @@ start:
 await_data:
     
     ;; Wait for event from host, indicating that data is ready
-    slp     1
+;    slp     1
     qbbc    await_data, r31, 30
 
     ;; Clear interrupt
