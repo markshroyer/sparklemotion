@@ -67,6 +67,10 @@ void sparkle_write(const uint8_t *buf, uint32_t buf_sz)
     if (buf_sz > BUF_MAX)
         return;
 
+    /* Wait until PRU0 has finished execution */
+    prussdrv_pru_wait_event(PRU_EVTOUT_0);
+    prussdrv_pru_clear_event(PRU0_ARM_INTERRUPT);
+
     /* Write data */
     prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0,
                               (unsigned int *)&buf_sz, sizeof(buf_sz));
@@ -83,9 +87,7 @@ void sparkle_write(const uint8_t *buf, uint32_t buf_sz)
         prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 1,
                                   (unsigned int *)adj_buf, buf_sz);
     }
-    prussdrv_pru_send_event(ARM_PRU0_INTERRUPT);
 
-    /* Wait until PRU0 has finished execution */
-    prussdrv_pru_wait_event(PRU_EVTOUT_0);
-    prussdrv_pru_clear_event(PRU0_ARM_INTERRUPT);
+    /* Fly little PRU... */
+    prussdrv_pru_send_event(ARM_PRU0_INTERRUPT);
 }

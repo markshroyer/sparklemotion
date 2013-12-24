@@ -126,6 +126,9 @@ start:
 
 await_data:
     
+    ;; Let the host know we're ready for data
+    mov     r31.b0, PRU0_ARM_INTERRUPT+16
+
     ;; Wait for event from host, indicating that data is ready
 ;    slp     1
     qbbc    await_data, r31, 30
@@ -208,8 +211,5 @@ _same_byte:
 
     ;; 50ns reset time specified for ws2811
     ndelay(50, 0)
-
-    ;; Signal program completion
-    mov     r31.b0, PRU0_ARM_INTERRUPT+16
 
     qba     await_data
