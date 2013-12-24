@@ -15,6 +15,7 @@ define(`ndelay', `_ndelay $1, $2, concat(_ndelay_, __line__)')
 define(`ncount', `_ncount $1, concat(_ncount_, __line__)')
 define(`waitcount', `_waitcount $1, concat(_waitcount_, __line__)')
 
+;; Convert nanoseconds to cycle count
 define(`nsecs', `($1) / 5')
 
 
@@ -31,9 +32,6 @@ define(`nsecs', `($1) / 5')
 #define CONST_DATA c24
 #define CONST_CTRL c28
 
-#define GPIO1 0x4804c000
-#define GPIO1_CLEARDATAOUT 0x190
-#define GPIO1_SETDATAOUT 0x194
 #define CTPPR_0 0x22028
 #define CTPPR_1 0x2202C
 
@@ -131,7 +129,7 @@ _await_interrupt:
 
     ;; Clear interrupt
     ldi     r0, ARM_PRU0_INTERRUPT
-    sbco    r0, c0, 0x24, 4
+    sbco    r0, CONST_INTC, 0x24, 4
 
     ;; Current bit offset
     ldi     d.bit_num, 7
@@ -141,7 +139,10 @@ _await_interrupt:
     lbco    d.byte, CONST_DATA, d.cur_byte_p, 1
 
     ;; End byte offset
-    lbco    d.end_byte_p, CONST_DATA, 0, 4      ; Loading into 16-bit reg
+    ;; (This load truncates a 32-bit value into a 16-bit register - I would
+    ;; have just used a 16 bit value on the buffer, but this made using TI's
+    ;; API easier.)
+    lbco    d.end_byte_p, CONST_DATA, 0, 4
     qbne    _non_null_message, d.end_byte_p, 0
     slp     0
 _non_null_message:
@@ -154,16 +155,16 @@ _non_null_message:
     ldi     d.count_end_period, nsecs(DATA_T_NS)
 
     ;; Disable and reset PRU cycle counter
-    lbco    r0, c28, 0, 4
+    lbco    r0, CONST_CTRL, 0, 4
     clr     r0, r0, 3
-    sbco    r0, c28, 0, 4
+    sbco    r0, CONST_CTRL, 0, 4
     mov     r0, 0
-    sbco    r0, c28, 0x0c, 4
+    sbco    r0, CONST_CTRL, 0x0c, 4
 
     ;; Start counter
-    lbco    r0, c28, 0, 4
+    lbco    r0, CONST_CTRL, 0, 4
     set     r0, r0, 3
-    sbco    r0, c28, 0, 4
+    sbco    r0, CONST_CTRL, 0, 4
 
 write_bit:
 
@@ -175,6 +176,7 @@ write_bit:
     ldi     r4, nsecs(DATA_T1H_NS - DATA_T0H_NS)
     inc     d.count_next_trans, r4
 _sending_zero:
+
     waitcount(d.count_next_trans)
 
     datalow
@@ -201,5 +203,4 @@ _same_byte:
 
     ;; 50ns reset time specified for ws2811
     ndelay(50, 0)
-
     qba     await_data
