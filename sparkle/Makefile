@@ -3,7 +3,7 @@ PASM = pasm
 CC = gcc
 M4 = m4
 
-CFLAGS += -Wall -Werror -pthread -I/usr/local/include
+CFLAGS += -Wall -Werror -pthread -I/usr/local/include -Wno-unused-variable
 LDFLAGS += -L/usr/local/lib -lprussdrv -lpthread
 
 OBJECTS = sparkle.o
@@ -25,6 +25,9 @@ all: sparkle.dtbo sparkle.bin demo
 
 demo: demo.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ demo.o $(OBJECTS) $(LDFLAGS)
+
+fern: fern.o $(OBJECTS) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ fern.o $(OBJECTS) $(LDFLAGS)
 
 python: _sparkle.c $(OBJECTS) $(HEADERS)
 	python setup.py build
