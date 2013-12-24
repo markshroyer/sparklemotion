@@ -33,7 +33,7 @@ xmas2: xmas2.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ xmas2.o $(OBJECTS) $(LDFLAGS) -lm
 
 fern: fern.o $(OBJECTS) $(HEADERS)
-	$(CC) $(CFLAGS) -Wno-unused-variable -o $@ fern.o $(OBJECTS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ fern.o $(OBJECTS) $(LDFLAGS)
 
 fern2: fern2.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ fern2.o $(OBJECTS) $(LDFLAGS)
