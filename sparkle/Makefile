@@ -9,7 +9,7 @@ LDFLAGS += -L/usr/local/lib -lprussdrv -lpthread
 OBJECTS = sparkle.o
 HEADERS = sparkle.h
 
-all: sparkle.dtbo sparkle.bin demo fern fern2 xmas2
+all: sparkle.dtbo sparkle.bin demo fern fern2 xmas2 random
 
 %.dtbo: %.dts
 	$(DTC) -I dts -O dtb -o $@ -@ $<
@@ -25,6 +25,9 @@ all: sparkle.dtbo sparkle.bin demo fern fern2 xmas2
 
 demo: demo.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ demo.o $(OBJECTS) $(LDFLAGS)
+
+random: random.o $(OBJECTS) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ random.o $(OBJECTS) $(LDFLAGS)
 
 xmas2: xmas2.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ xmas2.o $(OBJECTS) $(LDFLAGS) -lm
