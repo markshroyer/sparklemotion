@@ -12,6 +12,11 @@ $(document).ready(function ($) {
         hide: false,
         width: 480,
         mode: 'hsv',
+        controls: {
+            horiz: 's',
+            vert: 'v',
+            strip: 'h'
+        },
         change: function(event, ui) {
             setColor(ui.color.toString());
         }
