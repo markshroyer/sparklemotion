@@ -11,8 +11,7 @@
 int main(void)
 {
     uint8_t *data;
-    int led;
-    int color;
+    int led, color, primary;
     struct timespec delay = { 0, 20000000 };
 
     if (sparkle_init() < 0) {
@@ -28,10 +27,16 @@ int main(void)
         exit(1);
     }
 
-    for (color = 0; 1; color = (color + 1) % 3) {
+    for (color = 0b001; 1; color = (color + 1) % 0b1000) {
+        if (color == 0)
+            continue;
+
         for (led = 0; led < NLEDS; led++) {
             memset(data, 0, DATA_SZ);
-            data[3*led + color] = 0xff;
+            for (primary = 0; primary < 3; primary++) {
+                if (color & (1 << primary))
+                    data[3*led + primary] = 0xff;
+            }
 
             sparkle_write(data, DATA_SZ);
             nanosleep(&delay, NULL);
