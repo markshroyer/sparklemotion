@@ -109,11 +109,6 @@ label:
 
 start:
 
-;    ;; Enable master OCP
-;    lbco    r0, CONST_PRUCFG, 4, 4
-;    clr     r0.t4
-;    sbco    r0, CONST_PRUCFG, 4, 4
-
     ;; Make C28 point to the control register (0x22000)
     mov     r0, 0x00000220
     mov     r1, CTPPR_0
@@ -164,12 +159,6 @@ _non_null_message:
     sbco    r0, c28, 0, 4
     mov     r0, 0
     sbco    r0, c28, 0x0c, 4
-
-;    ;; Scope trigger
-;    datahigh
-;    ndelay(10000, 0)
-;    datalow
-;    ndelay(10000, 0)
 
     ;; Start counter
     lbco    r0, c28, 0, 4
