@@ -11,10 +11,11 @@
 int main(void)
 {
     uint8_t *data;
-    int led, color, primary;
+    int led;
+    /* int color, primary; */
     struct timespec delay = { 0, 500000000 };
-    uint8_t pattern[9]={0,255,0,255,0,0,255,255,255};
-    uint8_t step =0;
+    /* uint8_t pattern[9]={0,255,0,255,0,0,255,255,255}; */
+    /* uint8_t step =0; */
     unsigned char temp[3]={0,0,0};
     double decay = 0.5;
     unsigned char cleared=1;

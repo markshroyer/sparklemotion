@@ -24,6 +24,7 @@ typedef struct color {
 typedef struct point {
     color_t color;
     int32_t pos;
+    int speed;
 } point_t;
 
 double fade(uint8_t pointval, double distance)
@@ -36,6 +37,25 @@ double fade(uint8_t pointval, double distance)
     return ((double)pointval) * (1 - fabs(distance) / max_dist);
 }
 
+double point_led_distance(point_t *point, int led)
+{
+    int led_pos = led * RES;
+    int point_pos = (int)(point->pos);
+    unsigned int test;
+
+    unsigned int result = abs(led_pos - point_pos);
+
+    test = abs(led_pos - (point_pos - MAX_POS));
+    if (test < result)
+        result = test;
+
+    test = abs(led_pos - (point_pos + MAX_POS));
+    if (test < result)
+        result = test;
+
+    return (double)result;
+}
+
 color_t led_color(point_t *points, int npoint, int led)
 {
     int i;
@@ -44,9 +64,10 @@ color_t led_color(point_t *points, int npoint, int led)
     double r = 0xff, g = 0xff, b = 0xff;
 
     for (i = 0; i < NPOINTS; i++) {
-        r -= fade(0xff - points[i].color.r, led*RES - points[i].pos);
-        g -= fade(0xff - points[i].color.g, led*RES - points[i].pos);
-        b -= fade(0xff - points[i].color.b, led*RES - points[i].pos);
+        distance = point_led_distance(points+i, led);
+        r -= fade(0xff - points[i].color.r, distance);
+        g -= fade(0xff - points[i].color.g, distance);
+        b -= fade(0xff - points[i].color.b, distance);
     }
 
     result.r = (uint8_t)(fabs(r));
@@ -75,18 +96,20 @@ int main(void)
     points = calloc(NPOINTS, sizeof(point_t));
 
     points[0].pos = 0;
+    points[0].speed = 1;
     points[0].color.r = 0xff;
     points[0].color.g = 0x00;
     points[0].color.b = 0x00;
 
     points[1].pos = 30 * RES;
+    points[1].speed = 1;
     points[1].color.r = 0x00;
     points[1].color.g = 0xff;
     points[1].color.b = 0x00;
 
     while ( 1 ) {
         for (i = 0; i < NPOINTS; i++) {
-            points[i].pos = (points[i].pos + 1) % MAX_POS;
+            points[i].pos = (points[i].pos + points[i].speed) % MAX_POS;
         }
 
         for (i = 0; i < NLEDS; i++) {

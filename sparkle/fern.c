@@ -11,7 +11,7 @@
 int main(void)
 {
     uint8_t *data;
-    int led, color, primary;
+    /* int led, color, primary; */
     struct timespec delay = { 0, 500000000 };
     uint8_t pattern[9]={0,255,0,255,0,0,255,255,255};
     uint8_t step =0;

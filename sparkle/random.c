@@ -15,7 +15,6 @@
 int main(void)
 {
     uint8_t *data;
-    int led, color, primary;
     struct timespec delay = { 0, 100000000 };
     int fd;
     ssize_t n;
@@ -26,7 +25,7 @@ int main(void)
         exit(1);
     }
 
-    sparkle_max_luminance = 0xff;
+    sparkle_max_luminance = 0x40;
 
     data = malloc(DATA_SZ);
     if (! data) {
