@@ -9,9 +9,10 @@
 #define NLEDS 60
 #define DATA_SZ (3 * NLEDS)
 
-#define NPOINTS 2
+#define NPOINTS 4
 #define RES 10
 #define MAX_POS (NLEDS * RES)
+#define POINT_SPREAD 7
 
 #define BASE_VAL 0xff
 
@@ -29,7 +30,7 @@ typedef struct point {
 
 double fade(uint8_t pointval, double distance)
 {
-    const double max_dist = 12 * RES;
+    const double max_dist = POINT_SPREAD * RES;
 
     if (fabs(distance) > max_dist)
         return 0;
@@ -90,22 +91,34 @@ int main(void)
         exit(1);
     }
 
-    sparkle_max_luminance = 0x40;
+    sparkle_max_luminance = 0x50;
 
     buf = malloc(DATA_SZ);
     points = calloc(NPOINTS, sizeof(point_t));
 
-    points[0].pos = 0;
+    points[0].pos = 0 * RES;
     points[0].speed = 1;
     points[0].color.r = 0xff;
     points[0].color.g = 0x00;
     points[0].color.b = 0x00;
 
-    points[1].pos = 30 * RES;
+    points[1].pos = 15 * RES;
     points[1].speed = 1;
     points[1].color.r = 0x00;
     points[1].color.g = 0xff;
     points[1].color.b = 0x00;
+
+    points[2].pos = 30 * RES;
+    points[2].speed = 1;
+    points[2].color.r = 0xff;
+    points[2].color.g = 0x00;
+    points[2].color.b = 0x00;
+
+    points[3].pos = 45 * RES;
+    points[3].speed = 1;
+    points[3].color.r = 0x00;
+    points[3].color.g = 0xff;
+    points[3].color.b = 0x00;
 
     while ( 1 ) {
         for (i = 0; i < NPOINTS; i++) {
@@ -120,11 +133,9 @@ int main(void)
         }
 
         sparkle_write(buf, DATA_SZ);
-        //        goto end;
         nanosleep(&delay, NULL);
     }
 
-    //end:
     sparkle_exit();
 
     return 0;
