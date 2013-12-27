@@ -1,7 +1,21 @@
-build
-demo
-fern
-fern2
-xmas2
-random
+# autotools stuff
+aclocal.m4
+autom4te.cache/
+build-aux/
+config.h
+config.h.in
+config.h.in~
+config.log
+config.status
+configure
+libtool
+stamp-h1
+Makefile.in
+Makefile
+
+# M4-processed PASM sources
 sparkle.p
+
+# Build artifacts
+*.lo
+*.la

@@ -1,4 +1,4 @@
-#include "sparkle.h"
+#include "sparkle/sparkle.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -27,7 +27,7 @@ int main(void)
         exit(1);
     }
 
-    for (color = 0b001; 1; color = (color + 1) % 0b1000) {
+    for (color = 1; 1; color = (color + 1) % 8) {
         if (color == 0)
             continue;
 
