@@ -22,6 +22,33 @@ LT_PREREQ([2.4])
 AC_CANONICAL_HOST
 LT_INIT
 
+# Save PYTHON_PREFIX so it isn't overwritten by AM_PATH_PYTHON
+user_python_prefix="$PYTHON_PREFIX"
+
+# Determine whether to include the Python wrapper
+AC_MSG_CHECKING([whether to build Python interface])
+AC_ARG_WITH([python],
+        [AS_HELP_STRING([--with-python@<:@=PATH@:>@],
+                [Select Python interpreter for extension module])],
+        [AS_IF([test x"$withval" = x"yes"],
+                [AM_PATH_PYTHON(,, [""])],
+                [PYTHON="$withval"])],
+        [])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ""])
+if test "$PYTHON" = ""; then
+    AC_MSG_RESULT([no])
+else
+    AC_MSG_RESULT([yes])
+    if test x"$user_python_prefix" != x""; then
+        AC_SUBST(PYTHON_PREFIX_ARG, ["--prefix=\"$user_python_prefix\""])
+    fi
+fi
+AC_ARG_VAR([PYTHON_PREFIX], [Python extension module installation prefix])
+
+# Specify device tree compiler -- we need a patched one which accepts the
+# -@ option for compiling overlays
+AX_CHECK_DTC_OVERLAY([], [])
+
 AX_CHECK_CFLAGS([-Wall -Werror])
 AX_CHECK_CFLAGS([-pedantic])
 
