@@ -46,12 +46,12 @@ AC_DEFUN([AX_CHECK_DTC_OVERLAY],
     };
 };
 _ACEOF
-  if dtc -I dts -O dtb -o conftest.dtbo -@ conftest.dts >/dev/null 2>&1
+  if dtc -I dts -O dtb -o conftest.dtbo -XXX conftest.dts >/dev/null 2>&1
   then
     AC_MSG_RESULT([yes])
-    [$1]
+    $1
   else
     AC_MSG_RESULT([no])
-    [$2]
+    $2
   fi
 ])dnl AX_TRY_DTC_OVERLAY

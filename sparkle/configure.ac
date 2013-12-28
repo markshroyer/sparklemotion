@@ -31,7 +31,7 @@ AC_ARG_WITH([python],
         [AS_HELP_STRING([--with-python@<:@=PATH@:>@],
                 [Select Python interpreter for extension module])],
         [AS_IF([test x"$withval" = x"yes"],
-                [AM_PATH_PYTHON(,, [""])],
+                [AM_PATH_PYTHON([2.7],, [""])],
                 [PYTHON="$withval"])],
         [])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ""])
@@ -47,7 +47,21 @@ AC_ARG_VAR([PYTHON_PREFIX], [Python extension module installation prefix])
 
 # Specify device tree compiler -- we need a patched one which accepts the
 # -@ option for compiling overlays
-AX_CHECK_DTC_OVERLAY([], [])
+AX_CHECK_DTC_OVERLAY([], [AC_MSG_ERROR([
+
+Needs a patched dtc
+-------------------
+
+The Device Tree compiler on this system does not support the -@ option for
+building overlays.  Please either disable Device Tree generation for this
+build (--without-dtc) or obtain a suitably patched version of dtc, for
+example with the following script:
+
+https://raw.github.com/RobertCNelson/tools/master/pkgs/dtc.sh
+
+(If you have more than one instance of dtc installed on this system, be
+sure to specify the correct one using --with-dtc=\$PATH_TO_DTC)
+])])
 
 AX_CHECK_CFLAGS([-Wall -Werror])
 AX_CHECK_CFLAGS([-pedantic])
@@ -72,6 +86,8 @@ printf "\n"
 printf "Install prefix:      $prefix\n"
 printf "Host:                $host\n"
 printf "Compiler:            ${CC}\n"
+printf "DTC:                 ${DTC}\n"
+printf "PASM:                ${PASM}\n"
 printf "CFLAGS:              ${CFLAGS}\n"
 printf "LIBS:                ${LIBS}\n"
 printf "Shared library:      $enable_shared\n"
