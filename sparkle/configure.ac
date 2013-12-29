@@ -16,7 +16,6 @@ AC_PROG_CC_C99
 AM_PROG_CC_C_O
 
 AX_PTHREAD()
-
 LIBS="$PTHREAD_LIBS $LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
@@ -28,7 +27,16 @@ LT_PREREQ([2.4])
 AC_CANONICAL_HOST
 LT_INIT
 
-AC_CHECK_LIB([prussdrv], [prussdrv_init])
+AC_CHECK_LIB([prussdrv], [prussdrv_init], [], [AC_MSG_ERROR([
+
+libprussdrv not found
+---------------------
+
+TI's PRU utility library is required.  Obtain it as part of the AM335x PRU
+package:
+
+https://github.com/beagleboard/am335x_pru_package
+])])
 
 # Save PYTHON_PREFIX so it isn't overwritten by AM_PATH_PYTHON
 user_python_prefix="$PYTHON_PREFIX"
