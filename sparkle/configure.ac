@@ -61,7 +61,7 @@ https://raw.github.com/RobertCNelson/tools/master/pkgs/dtc.sh
 
 Alternatively, you can disable Device Tree overlay generation by running
 configure with the --disable-dtbo option.
-])
+])])
 
 # Specify device tree compiler -- we need a patched one which accepts the
 # -@ option for compiling overlays
