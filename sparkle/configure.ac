@@ -33,7 +33,7 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ""])
 AC_PATH_PROG([PASM], [pasm])
 AC_PATH_PROG([PASM], [pasm2])
 AC_ARG_VAR([PASM], [TI PRU Assembler])
-AS_IF([test -x $PASM], [], [AC_MSG_FAILURE([
+AS_IF([test -x $PASM], [], [AC_MSG_ERROR([
 
 pasm not found
 --------------
@@ -45,9 +45,19 @@ location (as part of the AM335x PRU package):
 https://github.com/beagleboard/am335x_pru_package
 ])])
 
+AC_MSG_CHECKING([whether to compile Device Tree overlay])
+AC_ARG_ENABLE([dtbo],
+    [AS_HELP_STRING([--disable-dtbo],
+        [disable Device Tree overlay compilation])],
+    [dtbo_enabled="$enableval"],
+    [dtbo_enabled=yes])
+AC_MSG_RESULT([$dtbo_enabled])
+
+AS_IF([test x"$dtbo_enabled" = x"yes"], [
+
 AC_PATH_PROG([DTC], [dtc], [/usr/bin/dtc])
 AC_ARG_VAR([DTC], [the Device Tree compiler])
-AS_IF([test -x $DTC], [], [AC_MSG_FAILURE([
+AS_IF([test -x $DTC], [], [AC_MSG_ERROR([
 
 dtc not found
 -------------
@@ -65,7 +75,7 @@ configure with the --disable-dtbo option.
 
 # Specify device tree compiler -- we need a patched one which accepts the
 # -@ option for compiling overlays
-AX_CHECK_DTC_OVERLAY([], [AC_MSG_FAILURE([
+AX_CHECK_DTC_OVERLAY([], [AC_MSG_ERROR([
 
 dtc does not support overlays
 -----------------------------
@@ -82,6 +92,8 @@ sure to specify the correct one by setting the \$DTC environment variable.)
 Alternatively, you can disable Device Tree overlay generation by running
 configure with the --disable-dtbo option.
 ])])
+
+]) # if $dtbo_enabled
 
 AX_CHECK_CFLAGS([-Wall -Werror])
 AX_CHECK_CFLAGS([-pedantic])
