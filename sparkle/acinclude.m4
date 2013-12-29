@@ -46,7 +46,7 @@ AC_DEFUN([AX_CHECK_DTC_OVERLAY],
     };
 };
 _ACEOF
-  if dtc -I dts -O dtb -o conftest.dtbo -XXX conftest.dts >/dev/null 2>&1
+  if $DTC -I dts -O dtb -o conftest.dtbo -@ conftest.dts >/dev/null 2>&1
   then
     AC_MSG_RESULT([yes])
     $1
