@@ -19,3 +19,4 @@ sparkle.p
 # Build artifacts
 *.lo
 *.la
+src/demo
